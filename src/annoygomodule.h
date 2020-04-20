@@ -19,14 +19,20 @@ class AnnoyIndex {
   void build(int q) {
     ptr->build(q);
   };
+  bool save(const char* filename, bool prefault) {
+    return ptr->save(filename, prefault);
+  };
   bool save(const char* filename) {
-    return ptr->save(filename);
+    return ptr->save(filename, true);
   };
   void unload() {
     ptr->unload();
   };
+  bool load(const char* filename, bool prefault) {
+    return ptr->load(filename, prefault);
+  };
   bool load(const char* filename) {
-    return ptr->load(filename);
+    return ptr->load(filename, true);
   };
   float getDistance(int i, int j) {
     return ptr->get_distance(i, j);
@@ -54,6 +60,9 @@ class AnnoyIndex {
     v->resize(this->f);
     ptr->get_item(item, &v->front());
   };
+  bool onDiskBuild(const char* filename) {
+    return ptr->on_disk_build(filename);
+  };
 };
 
 class AnnoyIndexAngular : public AnnoyIndex 
@@ -73,4 +82,11 @@ class AnnoyIndexEuclidean : public AnnoyIndex {
   }
 };
 
+class AnnoyIndexManhattan : public AnnoyIndex {
+ public:
+  AnnoyIndexManhattan(int f) {
+    ptr = new ::AnnoyIndex<int32_t, float, ::Manhattan, ::Kiss64Random>(f);
+    this->f = f;
+  }
+};
 }

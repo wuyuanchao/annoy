@@ -125,18 +125,36 @@ public:
     return 1;
   }
 
-  static int save(lua_State* L) {
+  static int on_disk_build(lua_State* L) {
     Impl* self = getAnnoy(L, 1);
     const char* filename = luaL_checkstring(L, 2);
-    self->save(filename);
+    self->on_disk_build(filename);
+    lua_pushboolean(L, true);
+    return 1;
+  }
+
+  static int save(lua_State* L) {
+    int nargs = lua_gettop(L);
+    Impl* self = getAnnoy(L, 1);
+    const char* filename = luaL_checkstring(L, 2);
+    bool prefault = true;
+    if (nargs >= 3) {
+      prefault = lua_toboolean(L, 3);
+    }
+    self->save(filename, prefault);
     lua_pushboolean(L, true);
     return 1;
   }
 
   static int load(lua_State* L) {
     Impl* self = getAnnoy(L, 1);
+    int nargs = lua_gettop(L);
     const char* filename = luaL_checkstring(L, 2);
-    if (!self->load(filename)) {
+    bool prefault = true;
+    if (nargs >= 3) {
+      prefault = lua_toboolean(L, 3);
+    }
+    if (!self->load(filename, prefault)) {
       return luaL_error(L, "Can't load file: %s", filename);
     }
     lua_pushboolean(L, true);
@@ -245,6 +263,7 @@ public:
       {"get_item_vector", &ThisClass::get_item_vector},
       {"get_distance", &ThisClass::get_distance},
       {"get_n_items", &ThisClass::get_n_items},
+      {"on_disk_build", &ThisClass::on_disk_build},
       {NULL, NULL},
     };
     return funcs;
@@ -274,6 +293,9 @@ static int lua_an_make(lua_State* L) {
     return 1;
   } else if (strcmp(metric, "euclidean") == 0) {
     LuaAnnoy<Euclidean>::createNew(L, f);
+    return 1;
+  } else if (strcmp(metric, "manhattan") == 0) {
+    LuaAnnoy<Manhattan>::createNew(L, f);
     return 1;
   } else {
     return luaL_error(L, "Unknown metric: %s", metric);

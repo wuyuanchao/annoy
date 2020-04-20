@@ -12,5 +12,10 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# This module is a dummy wrapper around the underlying C++ module.
-from .annoylib import Annoy as AnnoyIndex
+import unittest
+
+class TestCase(unittest.TestCase):
+    def assertAlmostEqual(self, x, y):
+        # Annoy uses float precision, so we override the default precision
+        super(TestCase, self).assertAlmostEqual(x, y, 3)
+

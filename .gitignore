@@ -4,11 +4,16 @@
 *.o
 build/
 dist/
+.vscode/
+*.pdb
+
 MANIFEST
 *.py[cod]
 *.idea
 
 # testing
-blah.ann
-t.ann
-x.tree
+*.ann
+*.tree
+*.annoy
+*.idx
+*.hdf5

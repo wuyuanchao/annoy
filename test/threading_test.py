@@ -12,5 +12,22 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# This module is a dummy wrapper around the underlying C++ module.
-from .annoylib import Annoy as AnnoyIndex
+import multiprocessing.pool
+import numpy
+from common import TestCase
+from annoy import AnnoyIndex
+
+
+class ThreadingTest(TestCase):
+    def test_threads(self):
+        n, f = 10000, 10
+        i = AnnoyIndex(f, 'euclidean')
+        for j in range(n):
+            i.add_item(j, numpy.random.normal(size=f))
+        i.build(10)
+
+        pool = multiprocessing.pool.ThreadPool()
+        def query_f(j):
+            i.get_nns_by_item(1, 1000)
+        pool.map(query_f, range(n))
+

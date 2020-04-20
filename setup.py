@@ -18,7 +18,7 @@
 from setuptools import setup, Extension
 import codecs
 import os
-import sys
+import platform
 
 readme_note = """\
 .. note::
@@ -34,22 +34,45 @@ readme_note = """\
 with codecs.open('README.rst', encoding='utf-8') as fobj:
     long_description = readme_note + fobj.read()
 
-if os.environ.get('TRAVIS') == 'true':
-    # Resolving some annoying issue
-    travis_extra_compile_args = ['-mno-avx']
-else:
-    travis_extra_compile_args = []
+# Various platform-dependent extras
+extra_compile_args = ['-D_CRT_SECURE_NO_WARNINGS']
+extra_link_args = []
+
+# Not all CPUs have march as a tuning parameter
+cputune = ['-march=native',]
+if platform.machine() == 'ppc64le':
+    extra_compile_args += ['-mcpu=native',]
+
+if platform.machine() == 'x86_64':
+    extra_compile_args += cputune
+
+if os.name != 'nt':
+    extra_compile_args += ['-O3', '-ffast-math', '-fno-associative-math']
+
+# #349: something with OS X Mojave causes libstd not to be found
+if platform.system() == 'Darwin':
+    extra_compile_args += ['-std=c++11', '-mmacosx-version-min=10.9']
+    extra_link_args += ['-stdlib=libc++', '-mmacosx-version-min=10.9']
+
+# Manual configuration, you're on your own here.
+manual_compiler_args = os.environ.get('ANNOY_COMPILER_ARGS', None)
+if manual_compiler_args:
+    extra_compile_args = manual_compiler_args.split(',')
+manual_linker_args = os.environ.get('ANNOY_LINKER_ARGS', None)
+if manual_linker_args:
+    extra_link_args = manual_linker_args.split(',')
 
 setup(name='annoy',
-      version='1.8.3',
+      version='1.16.3',
       description='Approximate Nearest Neighbors in C++/Python optimized for memory usage and loading/saving to disk.',
       packages=['annoy'],
       ext_modules=[
-        Extension(
-            'annoy.annoylib', ['src/annoymodule.cc'],
-            depends=['src/annoylib.h', 'src/kissrandom.h', 'src/mman.h'],
-            extra_compile_args=['-O3', '-march=native', '-ffast-math'] + travis_extra_compile_args,
-        )
+          Extension(
+              'annoy.annoylib', ['src/annoymodule.cc'],
+              depends=['src/annoylib.h', 'src/kissrandom.h', 'src/mman.h'],
+              extra_compile_args=extra_compile_args,
+              extra_link_args=extra_link_args,
+          )
       ],
       long_description=long_description,
       author='Erik Bernhardsson',
@@ -64,7 +87,9 @@ setup(name='annoy',
           'Programming Language :: Python :: 3.3',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
       ],
       keywords='nns, approximate nearest neighbor search',
-      setup_requires=['nose>=1.0']
-    )
+      setup_requires=['nose>=1.0'],
+      tests_require=['numpy', 'h5py']
+      )

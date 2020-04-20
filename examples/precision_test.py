@@ -10,7 +10,7 @@ except NameError:
 
 n, f = 100000, 40
 
-t = AnnoyIndex(f)
+t = AnnoyIndex(f, 'angular')
 for i in xrange(n):
     v = []
     for z in xrange(f):
@@ -28,7 +28,6 @@ time_sum = {}
 
 for i in xrange(prec_n):
     j = random.randrange(0, n)
-    print('finding nbs for', j)
         
     closest = set(t.get_nns_by_item(j, k, n))
     for limit in limits:
